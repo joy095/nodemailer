@@ -17,18 +17,19 @@ if (!SMTP_USER || !SMTP_PASS || !FRONTEND_URL) {
   process.exit(1);
 }
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || FRONTEND_URL.split(",").indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
+const whitelist = [process.env.FRONTEND_URL];
+const corsOptionsDelegate = function (req, callback) {
+  let corsOptions;
+  if (whitelist.indexOf(req.header("Origin")) !== -1) {
+    corsOptions = { origin: true }; // reflect (enable) the requested origin in the CORS response
+  } else {
+    corsOptions = { origin: false }; // disable CORS for this request
+  }
+  callback(null, corsOptions); // callback expects two parameters: error and options
 };
 
-app.use(cors(corsOptions));
+app.use(cors(corsOptionsDelegate));
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -36,7 +37,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/send-email", async (req, res) => {
-  const { name, email, reason, message } = req.body;
+  const { name, email, message } = req.body;
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -51,9 +52,8 @@ app.post("/send-email", async (req, res) => {
   });
 
   const mailOptions = {
-    from: SMTP_USER,
+    from: email,
     to: SMTP_USER,
-    subject: reason || "New Contact Form Submission",
     html: `
       <p><strong>Name:</strong> ${name}</p>
       <p><strong>Email:</strong> ${email}</p>
