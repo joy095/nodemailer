@@ -37,9 +37,9 @@ app.get("/", (req, res) => {
 });
 
 app.post("/send-email", async (req, res) => {
-  const { name, email, message } = req.body;
+  const { name, email, message, subject, phone } = req.body;
 
-  if (!name || !email || !message) {
+  if (!name || !email || !message || !subject) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -54,9 +54,11 @@ app.post("/send-email", async (req, res) => {
   const mailOptions = {
     from: email,
     to: SMTP_USER,
+    subject,
     html: `
       <p><strong>Name:</strong> ${name}</p>
       <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Phone:</strong> ${phone}</p>
       <p><strong>Message:</strong> ${message}</p>
     `,
   };
