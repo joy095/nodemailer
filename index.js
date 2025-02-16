@@ -17,7 +17,7 @@ if (!SMTP_USER || !SMTP_PASS || !FRONTEND_URL) {
   process.exit(1);
 }
 
-const whitelist = [process.env.FRONTEND_URL];
+const whitelist = process.env.FRONTEND_URL;
 const corsOptionsDelegate = function (req, callback) {
   let corsOptions;
   if (whitelist.indexOf(req.header("Origin")) !== -1) {
